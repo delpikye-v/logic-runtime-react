@@ -1,0 +1,18 @@
+import * as React from "react";
+/**
+ * Logic instance surface for React adapter
+ * (matches LogicRuntime)
+ */
+type LogicInstance<S> = {
+    state(): Readonly<S>;
+    emit(intent: string, payload?: any): Promise<void>;
+    subscribe(fn: () => void): () => void;
+};
+type LogicFactory<S> = {
+    create(scope?: string): LogicInstance<S>;
+};
+export declare function withLogic<S, P extends object>(logic: LogicFactory<S>, View: React.ComponentType<P & {
+    state: Readonly<S>;
+    emit: (intent: string, payload?: any) => Promise<void>;
+}>): React.FC<Omit<P, "state" | "emit">>;
+export {};
