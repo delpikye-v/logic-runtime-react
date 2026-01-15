@@ -1,4 +1,4 @@
-## 🔀 logic-runtime-react-z
+## ⚙️ logic-runtime-react-z
 
 [![NPM](https://img.shields.io/npm/v/logic-runtime-react-z.svg)](https://www.npmjs.com/package/logic-runtime-react-z)
 ![Downloads](https://img.shields.io/npm/dt/logic-runtime-react-z.svg)
@@ -156,12 +156,14 @@ const counterLogic = createLogic({
   },
 
   intents: bus => {
-    bus.on("inc", ({ state, setState }) => {
+    bus.on("inc", ({ state, setState, emit }) => {
       // state is READONLY snapshot (read-only)
       // ❌ state.count++
       setState(s => {
         s.count += 1
       })
+
+      // emit("inc") ❌ no nested
     })
 
     // Intent handlers can be sync or async
@@ -314,13 +316,12 @@ runtime.devtools?.timeline.replay(runtime.emit)
 | `intents`  | `(bus) => void`        | Defines **business actions** (intent handlers). Intents describe behavior, not UI. |
 | `plugins`  | `LogicPlugin<S, C>[]?` | Runtime extensions (devtools, logging, persistence, analytics, etc.).              |
 
-
 ---
 
 ## 🔍 Comparison
 
-| Feature         | logic-runtime-react-z  | Redux | Zustand  |
-| --------------- | ----------------------  | ----- | -------- |
+| Feature         | logic-runtime-react-z   | Redux | Zustand  |
+| --------------- | ----------------------- | ----- | -------- |
 | No-hook UI      | ✅                      | ❌     | ❌       |
 | Intent-first    | ✅                      | ❌     | ❌       |
 | Async built-in  | ✅                      | ⚠️     | ⚠️       |

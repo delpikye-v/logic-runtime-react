@@ -13,17 +13,8 @@ type ComposedLogic = {
 };
 export declare function composeLogic(...entries: ComposedLogic[]): {
     create(scope?: string): {
-        /**
-         * merged state
-         */
         readonly state: any;
-        /**
-         * ASYNC emit
-         */
         emit(intent: string, payload?: any): Promise<any[]>;
-        /**
-         * subscription fan-out
-         */
         subscribe(fn: () => void): () => void;
     };
 };
