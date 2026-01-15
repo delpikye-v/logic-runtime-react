@@ -1,8 +1,4 @@
 import * as React from "react";
-/**
- * Logic instance surface for React adapter
- * (matches LogicRuntime)
- */
 type LogicInstance<S> = {
     state(): Readonly<S>;
     emit(intent: string, payload?: any): Promise<void>;

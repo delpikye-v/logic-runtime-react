@@ -1,16 +1,7 @@
 import type { Effect } from "./types";
 export declare function composeEffects<W, R>(effects: Effect<W, R>[]): Effect<W, R>;
-/**
- * takeLatest
- */
 export declare function takeLatest<W, R>(): Effect<W, R>;
-/**
- * debounce
- */
 export declare function debounce<W, R>(ms: number): Effect<W, R>;
-/**
- * retry
- */
 export declare function retry<W, R>(count?: number): Effect<W, R>;
 export type EffectBuilder<W, R> = Effect<W, R> & {
     takeLatest(): EffectBuilder<W, R>;
