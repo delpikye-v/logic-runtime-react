@@ -10,5 +10,5 @@ type LogicFactory<S> = {
 export declare function withLogic<S, P extends object>(logic: LogicFactory<S>, View: React.ComponentType<P & {
     state: Readonly<S>;
     emit: (intent: string, payload?: any) => Promise<void>;
-}>): React.FC<Omit<P, "state" | "emit">>;
+}>, scope?: string): React.FC<Omit<P, "state" | "emit">>;
 export {};
