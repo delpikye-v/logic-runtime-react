@@ -8,6 +8,12 @@ export type EffectCtx<W = any, R = W, P = any> = {
     emit(intent: string, payload?: any): Promise<void>;
     setState: (fn: (s: W) => void) => void;
 };
+export type EmitHookCtx<S = any, C = any, P = any> = {
+    intent: string;
+    payload: P;
+    state: Readonly<S & C>;
+    scope: string;
+};
 export type IntentHandler<W = any, R = W, P = any> = (ctx: EffectCtx<W, R, P>) => void | Promise<void>;
 export type Effect<W = any, R = W, P = any> = (next: IntentHandler<W, R, P>) => IntentHandler<W, R, P>;
 export type IntentMiddleware<W = any, R = W, P = any> = (ctx: EffectCtx<W, R, P>, next: () => Promise<void>) => Promise<void>;
@@ -26,7 +32,7 @@ export type LogicRuntime<S extends object, C extends object = {}> = {
         timeline: Timeline;
     };
     __internal: {
-        onEmitStart(fn: any): void;
-        onEmitEnd(fn: any): void;
+        onEmitStart(fn: (ctx: EmitHookCtx<S, S & C, any>) => void): void;
+        onEmitEnd(fn: (ctx: EmitHookCtx<S, S & C, any>) => void): void;
     };
 };

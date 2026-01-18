@@ -1,6 +1,6 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Intent-first runtime for React. No hooks. Deterministic state. Orchestrated effects.",
   "license": "MIT",
   "author": "Delpi.Kye",
