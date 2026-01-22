@@ -1,12 +1,14 @@
 import { Timeline } from "./timeline";
+type RuntimeLike = {
+    scope: {
+        name: string;
+    } | string;
+    getSnapshot(): any;
+    emit(intent: string, payload?: any): Promise<void>;
+};
 export type Devtools = {
     timeline: Timeline;
-    wrap(runtime: RuntimeLike): void;
-};
-type RuntimeLike = {
-    scope: string;
-    state(): any;
-    emit(intent: string, payload?: any): Promise<void>;
+    wrap(): void;
 };
 export declare function attachDevtools(target: RuntimeLike): Devtools;
 export {};

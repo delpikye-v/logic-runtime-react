@@ -1,2 +1,2 @@
 export { attachDevtools } from "./devtools";
-export * from "./timeline";
+export type { Timeline, IntentRecord, IntentRecordType, } from "./timeline";

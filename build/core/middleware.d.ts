@@ -1,2 +1,3 @@
-export type IntentMiddleware<Ctx = any> = (ctx: Ctx, next: () => Promise<void>) => Promise<void>;
-export declare function compose(middlewares: IntentMiddleware[]): (ctx: any, next: () => Promise<void>) => Promise<void>;
+import { RuntimeIntentContext } from "./types";
+export type IntentNext<S> = (context: RuntimeIntentContext<S>) => Promise<void>;
+export type IntentMiddleware<S> = (next: IntentNext<S>) => IntentNext<S>;

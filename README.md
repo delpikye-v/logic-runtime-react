@@ -2,22 +2,26 @@
 
 [![NPM](https://img.shields.io/npm/v/logic-runtime-react-z.svg)](https://www.npmjs.com/package/logic-runtime-react-z) ![Downloads](https://img.shields.io/npm/dt/logic-runtime-react-z.svg)
 
-<a href="https://codesandbox.io/p/sandbox/x3jf32" target="_blank">LIVE EXAMPLE</a>
+<a href="https://codesandbox.io/p/sandbox/jnd992" target="_blank">LIVE EXAMPLE</a>
 
-**Intent-first business logic runtime**
-React is a view. Logic lives elsewhere.
+
+**Intent-first business logic runtime**: React is a view - Logic lives elsewhere.
+
+> A headless, deterministic, intent-driven runtime for frontend & backend logic.  
+> React components stay pure. Business logic is fully testable and replayable.
 
 ---
 
-## ✨ Core Idea
+## ✨ logic-runtime-react-z?
 
-> **Business logic lives outside React. React only renders state and emits intent.**
+> **Intent is the only entry point.**  
 
-* No React hooks in views
-* Intent is the only entry point
-* Predictable async flows
-* Headless & backend-friendly
-* Fully testable without rendering
+- No React hooks in views
+- Intent is the *only* entry point
+- Predictable async flows
+- Computed graph with caching
+- Headless & backend-friendly
+- Deterministic testing & devtools replay
 
 ---
 
@@ -26,16 +30,18 @@ React is a view. Logic lives elsewhere.
 ```
 UI / HTTP / Queue / Cron
         ↓
-emit(intent)
+     emit(intent)
         ↓
-middleware / effects
+   effects / middleware
         ↓
- intent handlers
+   intent handlers
         ↓
- mutate state
+     mutate state
         ↓
-computed / subscribers
+ computed / subscribers
 ```
+
+Think **events → behavior → state → derived state**.
 
 ---
 
@@ -54,269 +60,338 @@ import { createLogic } from "logic-runtime-react-z"
 
 const counterLogic = createLogic({
   state: { count: 0 },
+
   intents: bus => {
-    bus.on("inc", ({ setState }) => setState(s => { s.count++ }))
-    bus.on("add", ({ payload, setState }) => setState(s => { s.count += payload }))
+    bus.on("inc", ({ setState }) => {
+      setState(s => {
+        s.count++
+      })
+    })
+
+    bus.on<number>("add", ({ payload, setState }) => {
+      setState(s => {
+        s.count += payload
+      })
+    })
   },
 })
 
 const runtime = counterLogic.create()
+
 await runtime.emit("inc")
 await runtime.emit("add", 5)
-console.log(runtime.state.count) // 6
 
+console.log(runtime.state.count) // 6
+```
+
+✔ No UI  
+✔ Fully testable  
+✔ Deterministic
+
+---
+
+## ⚛️ React Integration (Type Inference, No Hooks)
+
+### Define Logic
+
+```ts
+// counter.logic.ts
+import { createLogic, effect } from "logic-runtime-react-z"
+
+export const counterLogic = createLogic({
+  name: "counter",
+
+  state: {
+    count: 1,
+    loading: false,
+  },
+
+  computed: {
+    double: ({ state }) => state.count * 2,
+    tripple: ({ state }) => state.count * 3,
+  },
+
+  intents: bus => {
+    bus.on("inc", ({ setState }) => {
+      setState(s => {
+        s.count++
+      })
+    })
+
+    bus.on<number>("add", ({ payload, setState }) => {
+      setState(s => {
+        s.count += payload
+      })
+    })
+
+    bus.on<number>("inc-async", async ({ payload, setState }) => {
+      setState(s => {
+        s.loading = true
+      })
+
+      await new Promise(r => setTimeout(r, 1000))
+
+      setState(s => {
+        s.count += payload
+        s.loading = false
+      })
+    })
+
+    bus.effect(
+      "inc-async",
+      effect(async ({ payload }) => {
+        console.log("effect run, payload =", payload)
+      }).takeLatest()
+    )
+  },
+
+  actions: {
+    inc({ emit }) {
+      return () => emit("inc")
+    },
+
+    add({ emit }) {
+      return (n: number) => emit("add", n)
+    },
+
+    incAsync({ emit }) {
+      return (n: number) => emit("inc-async", n)
+    },
+  },
+})
 ```
 
 ---
 
-## ⚛️ React Integration (No Hooks in View)
+### Pure React View (No Types Needed)
 
-```ts
-import { createLogic, effect, withLogic } from "logic-runtime-react-z"
+```tsx
+import React from "react"
+import { withLogic } from "logic-runtime-react-z"
+import { counterLogic } from "./counter.logic"
 
-interface State {
-  count: number;
-  loading: boolean;
-  double: number;
-}
+function CounterView(props: any) {
+  const { state, actions, emit } = props
 
-// Async effect for takeLatest behavior
-const asyncEffect = effect(async ({ payload, setState }) => {
-  console.log("Effect fired for payload:", payload);
-}).takeLatest()
-
-const counterLogic = createLogic({
-  name: "counter",
-  state: { count: 1, loading: false },
-  computed: { double: ({ state }) => state.count * 2 },
-  intents: bus => {
-    bus.on("inc", ({ setState }) => setState(s => { s.count++ }))
-    bus.on("inc-async", async ({ payload, setState }) => {
-      setState(s => { s.loading = true })
-      await new Promise(r => setTimeout(r, 5000))
-      setState(s => { s.count += payload; s.loading = false })
-    })
-    bus.effect("inc-async", asyncEffect)
-  },
-})
-
-// React view (pure, no hooks)
-function CounterView({ state, emit }: { state: State; emit: (intent: string, payload?: any) => void | Promise<void> }) {
   return (
-    <div>
-      <div>Count: {state.count}</div>
-      <button disabled={state.loading} onClick={() => emit("inc")}>Plus</button>
-      <button disabled={state.loading} onClick={() => emit("inc-async", 100)}>Async +100</button>
-      <div>Double: {state.double}</div>
+    <div style={{ padding: 12 }}>
+      <div>Count: {state.tripple}</div>
+
+      <button onClick={actions.inc}>+1 (action)</button>
+      <button onClick={() => actions.add(10)}>+10 (action)</button>
+
+      <button
+        disabled={state.loading}
+        onClick={() => actions.incAsync(5)}
+      >
+        Async +5
+      </button>
+
+      <hr />
+
+      <button onClick={() => emit("inc")}>
+        +1 (emit directly)
+      </button>
     </div>
   )
 }
 
-export const Counter = withLogic(counterLogic, CounterView)
-
+export const CounterPage =
+  withLogic(counterLogic, CounterView)
 ```
+
+✔ Props inferred automatically  
+✔ No generics  
+✔ No interfaces  
+✔ View stays dumb
 
 ---
 
-## 🧪 Middleware Example (Backend)
+## 🧪 Backend Runtime Example
 
 ```ts
 import { createBackendRuntime } from "logic-runtime-react-z"
 
-// Create runtime with initial state
 const runtime = createBackendRuntime({
   user: null,
   loading: false,
 })
 
-// Optional: attach devtools in dev mode
-const devtools = runtime.devtools
+runtime.registerIntents({
+  async login({ set }) {
+    set({ loading: true })
+    await new Promise(r => setTimeout(r, 500))
+    set({
+      user: { name: "Alice" },
+      loading: false,
+    })
+  },
 
-// Register some intents
-runtime.onIntent("login", async ({ payload, setState }) => {
-  setState(s => { s.loading = true })
-  // simulate async login
-  const user = await fakeLoginApi(payload)
-  setState(s => {
-    s.user = user
-    s.loading = false
-  })
+  logout({ set }) {
+    set({ user: null })
+  },
 })
 
-runtime.onIntent("logout", ({ setState }) => {
-  setState(s => { s.user = null })
-})
-
-// Emit some intents
-await runtime.emit("login", { username: "alice", password: "123" })
+await runtime.emit("login")
 await runtime.emit("logout")
 
-// ----------------- Using devtools -----------------
+// 👇 backend devtools
+const devtools = runtime.devtools
+console.log(devtools.timeline.records)
 
-// 1️⃣ Access timeline records
-console.log("Timeline records:", devtools.timeline.records)
+// relay
+// await devtools.timeline.replay(runtime.emit, {
+//   scope: "backend"
+})
+```
 
-// 2️⃣ Replay intents
-await devtools.timeline.replay(runtime.emit, { scope: "backend" })
+✔ Same intent model  
+✔ No React  
+✔ Replayable  
+✔ Devtools is backend-first.
 
-// 3️⃣ Clear timeline
-devtools.timeline.clear()
-console.log("Timeline cleared:", devtools.timeline.records)
+---
+
+## 🪝 Hooks API (Optional)
+
+```ts
+// useActions
+import { useActions } from "logic-runtime-react-z"
+import { counterLogic } from "./counter.logic"
+
+function Buttons() {
+  const actions = useActions(counterLogic)
+
+  return (
+    <>
+      <button onClick={actions.inc}>+1</button>
+      <button onClick={() => actions.add(5)}>+5</button>
+    </>
+  )
+}
+
+// useSelector
+import { useSelector } from "logic-runtime-react-z"
+import { counterLogic } from "./counter.logic"
+
+function DoubleValue() {
+  const double = useSelector(
+    counterLogic,
+    s => s.double
+  )
+
+  return <div>Double: {double}</div>
+}
+
+// useRuntime
+import { useRuntime } from "logic-runtime-react-z"
+import { counterLogic } from "./counter.logic"
+
+function DebugPanel() {
+  const runtime = useRuntime(counterLogic)
+
+  return (
+    <button onClick={() => runtime.emit("inc")}>
+      Emit directly
+    </button>
+  )
+}
 
 ```
 
 ---
 
-## 🧪 Unit Test Example (Headless)
+## 🧱 Composing Multiple Logic Modules
+
+```ts
+import { composeLogic } from "logic-runtime-react-z"
+import { userLogic } from "./user.logic"
+import { cartLogic } from "./cart.logic"
+
+export const appLogic = composeLogic({
+  user: userLogic,
+  cart: cartLogic,
+})
+
+
+// usage
+const runtime = appLogic.create()
+
+await runtime.emit("user:login", credentials)
+
+const snapshot = runtime.getSnapshot()
+snapshot.user   // user state
+snapshot.cart   // cart state
+
+```
+
+---
+
+## 🧪 Unit Test Example
 
 ```ts
 const logic = createLogic({
   state: { value: 0 },
-  computed: { squared: ({ state }) => state.value * state.value },
+
+  computed: {
+    squared: ({ state }) => state.value * state.value,
+  },
+
   intents: bus => {
-    bus.on("set", ({ payload, setState }) => setState(s => { s.value = payload }))
-  }
+    bus.on("set", ({ payload, setState }) => {
+      setState(s => {
+        s.value = payload
+      })
+    })
+  },
 })
 
 const runtime = logic.create()
+
 await runtime.emit("set", 4)
+
 expect(runtime.state.squared).toBe(16)
-
 ```
-
----
-
-## 🔍 Comparison
-
-| Feature                     | logic-runtime-react-z     | Redux                | Zustand  | Recoil/Jotai   |
-| --------------------------- | ------------------------  | -------------------- | -------- | -------------- |
-| Intent-first                | ✅                        | ❌                    | ❌       | ❌             |
-| Headless / backend-friendly | ✅                        | ⚠️                    | ⚠️       | ❌             |
-| Async orchestration         | ✅ (takeLatest, debounce) | ⚠️ (middleware add )  | ⚠️       | ⚠️             |
-| Computed graph              | ✅                        | ❌                    | ❌       | ✅ (atom deps) |
-| Devtools replay async       | ✅                        | ⚠️                    | ❌       | ⚠️             |
-| UI-agnostic                 | ✅                        | ⚠️                    | ⚠️       | ❌             |
-| Deterministic testability   | ✅                        | ⚠️                    | ⚠️       | ⚠️             |
-
-
----
-
-## ⚖️ Comparison with Vue2
-
-While logic-runtime-react-z uses a **reactive + computed pattern** similar to Vue2, the behavior is quite different:
-
-| Feature                   | Vue2                   | logic-runtime-react-z                               |
-|---------------------------|----------------------- |---------------------------------------------------- |
-| Reactive base state       | ✅ proxy               | ✅ store + computed tracking.                        |
-| Computed                  | ✅                     | ✅ dependency tracking + invalidation.               |
-| Intent-driven flow        | ❌                     | ✅ all actions go through `emit(intent)`.            |
-| Async orchestration       | ❌                     | ✅ effects + middleware (takeLatest, debounce, etc.) |
-| Headless / backend-ready  | ❌                     | ✅ can run without React/UI                          |
-| Deterministic testing     | ❌                     | ✅ full headless tests possible                      |
-| Devtools replay           | ❌                     | ✅ timeline tracking & replay                        |
-
-> **Takeaway:** It feels familiar if you know Vue2 reactivity, but under the hood it's **intent-first, headless, and fully testable**, unlike Vue2.
 
 ---
 
 ## 🚫 Anti-patterns (What NOT to do)
 
-This library enforces a **clear separation between intent, behavior, and view**.  
-If you find yourself doing the following, you are probably fighting the architecture.
-
-
-#### ❌ 1. Putting business logic inside React components
+### ❌ Business logic in React
 
 ```tsx
-// ❌ Don't do this
-function Login() {
-  const [loading, setLoading] = useState(false)
-
-  async function handleLogin() {
-    setLoading(true)
-    const user = await api.login()
-    setLoading(false)
-    navigate("/home")
-  }
-}
+useEffect(() => {
+  fetchData()
+}, [])
 ```
-Why this is wrong
-- Logic tied to React lifecycle
-- Hard to test without rendering
-- Side-effects scattered in UI
 
 ✅ Correct
 
 ```ts
-runtime.emit("login")
+emit("data:fetch")
 ```
+
+---
+
+### ❌ Mutating state directly
 
 ```ts
-bus.on("login", async ({ setState, emit }) => {
-  setState(s => { s.loading = true })
-  const user = await api.login()
-  setState(s => { s.loading = false })
-  emit("login:success", user)
-})
+runtime.state.user.name = "admin"
 ```
-
-#### ❌ 2. Calling handlers directly instead of emitting intent
-```ts
-// ❌ Don't call handlers manually
-loginHandler(payload)
-```
-Why this is wrong
-
-- Skips middleware & effects
-- Breaks devtools timeline
-- Makes behavior non-deterministic
 
 ✅ Correct
 
 ```ts
-runtime.emit("login", payload)
-```
-Intent is the only entry point. Always.
-
-#### ❌ 3. Using effects to mutate state directly
-```ts
-// ❌ Effect mutating state
-bus.effect("save", next => async ctx => {
-  ctx.setState(s => { s.saving = true })
-  await next(ctx)
-})
+emit("update:user:name", "admin")
 ```
 
-Why this is wrong
+---
 
-- Effects are orchestration, not business logic
-- Hard to reason about ordering
-- Blurs responsibility
-
-✅ Correct
+### ❌ Generic Redux-style intents
 
 ```ts
-bus.on("save", ({ setState }) => {
-  setState(s => { s.saving = true })
-})
-```
-Effects should only:
-- debounce
-- retry
-- cancel
-- log
-- trace
-
-#### ❌ 4. Treating intent like Redux actions
-```ts
-// ❌ Generic, meaningless intent
 emit("SET_STATE", { loading: true })
 ```
-
-Why this is wrong
-
-- Intent should describe user or system intention
-- Not raw state mutation
 
 ✅ Correct
 
@@ -325,72 +400,20 @@ emit("login:start")
 emit("login:success", user)
 emit("login:failed", error)
 ```
-Intents are verbs, not patches.
 
-#### ❌ 5. Reading or mutating state outside the runtime
-```ts
-// ❌ External mutation
-runtime.state.user.name = "admin"
-```
-Why this is wrong
-- Breaks computed cache
-- Bypasses subscriptions
-- Devtools become unreliable
+---
 
-✅ Correct
+## 🧩 When to Use This
 
-```ts
-emit("update:user:name", "admin")
-```
+- Complex async flows
+- Shared logic across UI / backend
+- Need deterministic tests
+- Want to remove logic from React
 
-#### ❌ 6. Using React hooks to replace runtime behavior
-```ts
-// ❌ useEffect as orchestration
-useEffect(() => {
-  if (state.loggedIn) {
-    fetchProfile()
-  }
-}, [state.loggedIn])
-```
-Why this is wrong
+## 🚫 When NOT to Use
 
-- Behavior split across layers
-- Impossible to replay or test headlessly
-
-✅ Correct
-
-```ts
-bus.on("login:success", async ({ emit }) => {
-  await emit("profile:fetch")
-})
-```
-#### ❌ 7. One logic runtime doing everything
-```ts
-// ❌ God runtime
-createLogic({
-  state: {
-    user: {},
-    cart: {},
-    products: {},
-    settings: {},
-    ui: {},
-  }
-})
-```
-Why this is wrong
-- No ownership boundaries
-- Hard to compose
-- Does not scale
-
-✅ Correct
-
-```ts
-composeLogic(
-  userLogic,
-  cartLogic,
-  productLogic
-)
-```
+- Simple local UI state
+- Throwaway components
 
 ---
 

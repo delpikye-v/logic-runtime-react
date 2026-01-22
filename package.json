@@ -1,16 +1,13 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "2.0.2",
-  "description": "Intent-first runtime for React. No hooks. Deterministic state. Orchestrated effects.",
+  "version": "3.0.0",
+  "description": "Intent-first business logic runtime. Headless and backend-friendly. Deterministic state, computed graph, and orchestrated async effects. React is just a view layer.",
   "license": "MIT",
   "author": "Delpi.Kye",
-
   "sideEffects": false,
-
   "main": "build/index.cjs.js",
   "module": "build/index.esm.js",
   "types": "build/index.d.ts",
-
   "exports": {
     ".": {
       "types": "./build/index.d.ts",
@@ -28,57 +25,66 @@
       "require": "./build/devtools/index.cjs.js"
     }
   },
-
-  "files": ["build"],
-
+  "files": [
+    "build"
+  ],
   "scripts": {
     "clean": "rimraf build",
     "build": "rollup -c",
     "cb": "npm run clean && npm run build",
     "prepublishOnly": "npm run cb"
   },
-
   "repository": {
     "type": "git",
     "url": "https://github.com/delpikye-v/logic-runtime-react.git"
   },
-
   "homepage": "https://github.com/delpikye-v/logic-runtime-react#readme",
   "bugs": {
     "url": "https://github.com/delpikye-v/logic-runtime-react/issues"
   },
-
   "keywords": [
-    "react",
-    "react-no-hook",
-    "external-store",
+    "intent-first",
     "intent-runtime",
+    "business-logic",
     "logic-runtime",
-    "computed-state",
-    "no-hooks",
-    "react-architecture",
-    "external-runtime"
-  ],
 
+    "headless",
+    "backend-friendly",
+    "ui-agnostic",
+
+    "react",
+    "react-architecture",
+    "no-hooks",
+    "external-store",
+
+    "computed-state",
+    "derived-state",
+    "async-effects",
+    "takeLatest",
+
+    "state-management"
+  ],
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
-
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "rimraf": "^5.0.5",
     "rollup": "^4.9.6",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-typescript2": "^0.36.0",
-    "typescript": "^5.3.3",
     "tslib": "^2.6.2",
-
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17"
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "chrono-state-z": "^2.0.1",
+    "intentx-core-z": "^1.0.0"
   }
 }

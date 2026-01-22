@@ -1,6 +1,30 @@
-import type { Effect, EffectCtx } from "./types";
-export declare function composeEffects<W, R>(effects: Effect<W, R>[]): Effect<W, R>;
-export declare function takeLatest<W, R>(): Effect<W, R>;
-export declare function debounce<W, R>(ms: number): Effect<W, R>;
-export declare function retry<W, R>(count?: number): Effect<W, R>;
-export declare function effect<W extends object, R extends object = W, P = any>(body: (ctx: EffectCtx<W, R, P>) => void | Promise<void>): any;
+export type EffectStrategy = "default" | "takeLatest" | "debounce";
+export type EffectHandler<S = any> = (context: S) => void | Promise<void>;
+export type EffectDef<S = any> = {
+    _kind: "effect";
+    handler: EffectHandler<S>;
+    strategy: EffectStrategy;
+    wait: number;
+};
+export declare function effect<S = any>(fn: EffectHandler<S>): {
+    takeLatest(): {
+        takeLatest(): any;
+        debounce(ms: number): any;
+        _kind: "effect";
+        handler: EffectHandler<S>;
+        strategy: EffectStrategy;
+        wait: number;
+    };
+    debounce(ms: number): {
+        takeLatest(): any;
+        debounce(ms: number): any;
+        _kind: "effect";
+        handler: EffectHandler<S>;
+        strategy: EffectStrategy;
+        wait: number;
+    };
+    _kind: "effect";
+    handler: EffectHandler<S>;
+    strategy: EffectStrategy;
+    wait: number;
+};
