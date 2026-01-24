@@ -1,5 +1,6 @@
 import { LogicActions, LogicFactory } from "../logic/createLogic";
-export declare function useActions<A extends object>(runtime: {
+import { LogicRuntime } from "../core/runtime";
+export declare function useActions<A extends object>(runtime: LogicRuntime<any> & {
     actions: A;
 }): A;
 export declare function useActions<S extends object, A extends LogicActions>(logic: LogicFactory<S, A>): A;

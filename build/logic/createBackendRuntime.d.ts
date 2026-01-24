@@ -8,10 +8,10 @@ export type BackendContext<S> = {
 export type BackendIntent<S> = (context: BackendContext<S>) => void | Promise<void>;
 export type BackendIntents<S> = Record<string, BackendIntent<S>>;
 export declare function createBackendRuntime<S extends object>(initial: S): {
-    state: () => S;
+    state: () => Readonly<S>;
     reset: () => void;
     emit: (intent: string, payload?: any) => Promise<void>;
     registerIntents: (intents: BackendIntents<S>) => void;
-    onIntent: (type: string, handler: import("intentx-core-z").IntentHandler<S>, scope?: Scope) => () => void;
-    effect: (type: string, fx: import("intentx-core-z/build/intent/effect").IntentEffect<S>, scope?: Scope) => void;
+    onIntent: (type: string, h: import("intentx-core-z").IntentHandler<S>, scope?: Scope) => () => void;
+    effect: (type: string, fx: import("intentx-core-z/build/intent/types").IntentEffect<S>, scope?: Scope) => () => void;
 };

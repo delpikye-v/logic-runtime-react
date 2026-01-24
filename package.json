@@ -1,6 +1,6 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Intent-first business logic runtime. Headless and backend-friendly. Deterministic state, computed graph, and orchestrated async effects. React is just a view layer.",
   "license": "MIT",
   "author": "Delpi.Kye",
@@ -47,21 +47,17 @@
     "intent-runtime",
     "business-logic",
     "logic-runtime",
-
     "headless",
     "backend-friendly",
     "ui-agnostic",
-
     "react",
     "react-architecture",
     "no-hooks",
     "external-store",
-
     "computed-state",
     "derived-state",
     "async-effects",
     "takeLatest",
-
     "state-management"
   ],
   "peerDependencies": {
@@ -84,7 +80,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "chrono-state-z": "^2.0.1",
-    "intentx-core-z": "^1.0.0"
+    "chrono-state-z": "^2.1.0",
+    "intentx-core-z": "^2.1.0"
   }
 }

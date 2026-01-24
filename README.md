@@ -1,20 +1,19 @@
-# ⚙️ logic-runtime-react-z
+# 🧩 logic-runtime-react-z
 
 [![NPM](https://img.shields.io/npm/v/logic-runtime-react-z.svg)](https://www.npmjs.com/package/logic-runtime-react-z) ![Downloads](https://img.shields.io/npm/dt/logic-runtime-react-z.svg)
 
 <a href="https://codesandbox.io/p/sandbox/jnd992" target="_blank">LIVE EXAMPLE</a>
 
+**Intent-first business logic runtime**: React is a **view** — logic lives **elsewhere**.
 
-**Intent-first business logic runtime**: React is a view - Logic lives elsewhere.
+A headless, deterministic, intent-driven runtime for frontend & backend logic.
+React components stay pure. Business logic is fully testable, replayable, and framework-agnostic.
 
-> A headless, deterministic, intent-driven runtime for frontend & backend logic.  
-> React components stay pure. Business logic is fully testable and replayable.
+> **Intent is the only entry point.**
 
 ---
 
-## ✨ logic-runtime-react-z?
-
-> **Intent is the only entry point.**  
+## ✨ Why logic-runtime-react-z?
 
 - No React hooks in views
 - Intent is the *only* entry point
@@ -90,7 +89,7 @@ console.log(runtime.state.count) // 6
 
 ---
 
-## ⚛️ React Integration (Type Inference, No Hooks)
+## ⚛️ React Integration (No Hooks)
 
 ### Define Logic
 
@@ -108,7 +107,7 @@ export const counterLogic = createLogic({
 
   computed: {
     double: ({ state }) => state.count * 2,
-    tripple: ({ state }) => state.count * 3,
+    triple: ({ state }) => state.count * 3,
   },
 
   intents: bus => {
@@ -175,7 +174,7 @@ function CounterView(props: any) {
 
   return (
     <div style={{ padding: 12 }}>
-      <div>Count: {state.tripple}</div>
+      <div>Count: {state.triple}</div>
 
       <button onClick={actions.inc}>+1 (action)</button>
       <button onClick={() => actions.add(10)}>+10 (action)</button>
@@ -270,12 +269,12 @@ function Buttons() {
   )
 }
 
-// useSelector
-import { useSelector } from "logic-runtime-react-z"
+// useLogicSelector
+import { useLogicSelector } from "logic-runtime-react-z"
 import { counterLogic } from "./counter.logic"
 
 function DoubleValue() {
-  const double = useSelector(
+  const double = useLogicSelector(
     counterLogic,
     s => s.double
   )
@@ -417,6 +416,39 @@ emit("login:failed", error)
 
 ---
 
-## 📜 License
+## 🔍 Comparison with: Redux vs Zustand 
 
-MIT / Delpi
+| Capability / Library     | logic-runtime-react-z | Redux | Zustand |
+|--------------------------|:---------------------:|:-----:|:-------:|
+| Intent-first model       | ✅                    | ❌    | ❌       |
+| State-first model        | ❌                    | ✅    | ✅       |
+| First-class effects      | ✅                    | ❌    | ❌       |
+| Built-in async handling  | ✅                    | ❌    | ❌       |
+| Computed state graph     | ✅                    | ❌    | ⚠️       |
+| Deterministic execution  | ✅                    | ❌    | ❌       |
+| Logic outside React      | ✅                    | ❌    | ❌       |
+| Backend-safe             | ✅                    | ❌    | ❌       |
+| Intent / effect tracing  | ✅                    | ❌    | ❌       |
+| Centralized state store  | ❌                    | ✅    | ✅       |
+| Easy global state        | ⚠️                    | ✅    | ✅       |
+| Minimal boilerplate      | ✅                    | ❌    | ✅       |
+
+
+
+```bash
+Redux / Zustand:
+UI → setState → store → re-render
+
+logic-runtime-react-z:
+UI → intent → logic → effect → state
+```
+
+### One-liner takeaway
+- Redux and Zustand manage **state**.
+- logic-runtime-react-z orchestrates **logic**.
+
+---
+
+## License
+
+MIT
