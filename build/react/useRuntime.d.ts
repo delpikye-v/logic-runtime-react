@@ -1,4 +1,5 @@
+import type { ComputedDef, InferComputed } from "../core/runtime";
 import { LogicRuntime } from "../core/runtime";
-import { LogicFactory } from "../logic/createLogic";
-export declare function useRuntime<S extends object>(runtime: LogicRuntime<S>): Readonly<S>;
-export declare function useRuntime<S extends object, A extends Record<string, any>>(logic: LogicFactory<S, A>): Readonly<S>;
+import type { LogicFactory } from "../logic/createLogic";
+export declare function useRuntime<S extends object, C extends ComputedDef<S>, A extends Record<string, any>>(runtime: LogicRuntime<S, C, A>): Readonly<S & InferComputed<C>>;
+export declare function useRuntime<S extends object, C extends ComputedDef<S>, A extends Record<string, any>>(logic: LogicFactory<S, C, A>): Readonly<S & InferComputed<C>>;

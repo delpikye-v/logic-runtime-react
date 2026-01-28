@@ -1,10 +1,11 @@
 import * as React from "react";
 import { Scope } from "intentx-core-z";
-import { LogicActions, LogicFactory } from "../logic/createLogic";
-type InjectedProps<S extends object, A extends LogicActions> = {
-    state: Readonly<S>;
+import type { LogicActions, LogicFactory } from "../logic/createLogic";
+import type { ComputedDef, InferComputed } from "../core/runtime";
+type InjectedProps<S extends object, C extends ComputedDef<S>, A extends LogicActions> = {
+    state: Readonly<S & InferComputed<C>>;
     actions: A;
     emit: (intent: string, payload?: any) => Promise<void>;
 };
-export declare function withLogic<S extends object, A extends LogicActions, P extends object>(logic: LogicFactory<S, A>, View: React.ComponentType<P & InjectedProps<S, A>>, scope?: Scope | string): React.FC<Omit<P, keyof InjectedProps<S, A>>>;
+export declare function withLogic<S extends object, C extends ComputedDef<S>, A extends LogicActions, P extends object>(logic: LogicFactory<S, C, A>, View: React.ComponentType<P & InjectedProps<S, C, A>>, scope?: Scope | string): React.FC<Omit<P, keyof InjectedProps<S, C, A>>>;
 export {};

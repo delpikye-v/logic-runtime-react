@@ -1,18 +1,21 @@
+import { Scope } from "intentx-core-z";
+import type { ComputedDef, InferComputed } from "../core/runtime";
 import { LogicRuntime } from "../core/runtime";
 import type { LogicFactory } from "../logic/createLogic";
-type LogicMap = Record<string, LogicFactory<any, any>>;
-type RuntimeMap<M extends LogicMap> = {
-    [K in keyof M]: ReturnType<M[K]["create"]>;
+type AnyLogicFactory = LogicFactory<any, ComputedDef<any>, any>;
+type LogicMap = Record<string, AnyLogicFactory>;
+type InferRuntime<L> = L extends LogicFactory<infer S, infer C, infer A> ? LogicRuntime<S, C, A> : never;
+type InferState<M extends LogicMap> = {
+    [K in keyof M]: InferRuntime<M[K]> extends LogicRuntime<infer S, infer C, any> ? Readonly<S & InferComputed<C>> : never;
 };
-type SnapshotOf<M extends LogicMap> = {
-    [K in keyof M]: ReturnType<M[K]["create"]> extends LogicRuntime<infer S extends object, any> ? Readonly<S> : never;
+type InferActions<M extends LogicMap> = {
+    [K in keyof M]: InferRuntime<M[K]> extends LogicRuntime<any, any, infer A> ? A : never;
 };
-export declare function composeLogic<M extends LogicMap>(logics: M): {
-    create(scope?: any): {
-        emit(intent: string, payload?: any): Promise<void>;
-        subscribe(fn: () => void): () => void;
-        getSnapshot(): SnapshotOf<M>;
-        runtimes: RuntimeMap<M>;
-    };
+export declare function composeLogic<M extends LogicMap>(map: M): {
+    scope: Scope;
+    runtimes: { [K in keyof M]: InferRuntime<M[K]>; };
+    emit: <P = any>(type: string, payload?: P) => Promise<void>;
+    actions: InferActions<M>;
+    getState: () => InferState<M>;
 };
 export {};

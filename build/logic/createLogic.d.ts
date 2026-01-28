@@ -1,28 +1,23 @@
 import { Scope } from "intentx-core-z";
-import { LogicRuntime } from "../core/runtime";
+import { LogicRuntime, ComputedDef, InferComputed } from "../core/runtime";
 import { EffectDef } from "../core/effect";
-type ComputedFactory<S> = (context: {
-    state: Readonly<S>;
-}) => any;
-type ActionFactory<S extends object, Fn extends (...args: any[]) => any> = (context: {
-    emit: LogicRuntime<S, any>["emit"];
-    getState: () => Readonly<S>;
-}) => Fn;
 export type LogicActions = Record<string, (...args: any[]) => any>;
-export type LogicFactory<S extends object, A extends LogicActions> = {
+export type LogicFactory<S extends object, C extends ComputedDef<S>, A extends LogicActions> = {
     name?: string;
-    create(scope?: Scope): LogicRuntime<S, A>;
+    create(scope?: Scope): LogicRuntime<S, C, A>;
 };
-export declare function createLogic<S extends object, A extends LogicActions>(config: {
+export declare function createLogic<S extends object, C extends ComputedDef<S> = {}, A extends LogicActions = {}>(config: {
     name?: string;
     state: S;
-    computed?: Record<string, ComputedFactory<S>>;
+    computed?: C;
     intents?: (bus: {
-        on: LogicRuntime<S>["onIntent"];
+        on: LogicRuntime<S, C, A>["onIntent"];
         effect: (type: string, eff: EffectDef) => void;
     }) => void;
     actions?: {
-        [K in keyof A]: ActionFactory<S, A[K]>;
+        [K in keyof A]: (context: {
+            emit: LogicRuntime<S, C, A>["emit"];
+            getState: () => Readonly<S & InferComputed<C>>;
+        }) => A[K];
     };
-}): LogicFactory<S, A>;
-export {};
+}): LogicFactory<S, C, A>;

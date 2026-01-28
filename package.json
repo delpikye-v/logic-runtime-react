@@ -1,6 +1,6 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Intent-first business logic runtime. Headless and backend-friendly. Deterministic state, computed graph, and orchestrated async effects. React is just a view layer.",
   "license": "MIT",
   "author": "Delpi.Kye",
