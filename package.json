@@ -1,10 +1,11 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "3.1.1",
-  "description": "Intent-first business logic runtime. Headless and backend-friendly. Deterministic state, computed graph, and orchestrated async effects. React is just a view layer.",
+  "version": "3.1.2",
+  "description": "Intent-first business logic runtime. Deterministic, headless, and framework-agnostic.",
   "license": "MIT",
   "author": "Delpi.Kye",
   "sideEffects": false,
+
   "main": "build/index.cjs.js",
   "module": "build/index.esm.js",
   "types": "build/index.d.ts",
@@ -28,12 +29,14 @@
   "files": [
     "build"
   ],
+
   "scripts": {
     "clean": "rimraf build",
     "build": "rollup -c",
     "cb": "npm run clean && npm run build",
     "prepublishOnly": "npm run cb"
   },
+
   "repository": {
     "type": "git",
     "url": "https://github.com/delpikye-v/logic-runtime-react.git"
@@ -42,6 +45,7 @@
   "bugs": {
     "url": "https://github.com/delpikye-v/logic-runtime-react/issues"
   },
+
   "keywords": [
     "intent-first",
     "intent-runtime",
@@ -60,6 +64,7 @@
     "takeLatest",
     "state-management"
   ],
+
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"

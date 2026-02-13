@@ -10,7 +10,7 @@ A headless, deterministic, intent-driven runtime for frontend & backend logic.
 React components stay pure. Business logic is fully testable, replayable, and framework-agnostic.
 
 > **Intent is the only entry point.**
-> **React is optional. createLogic is the product. Everything else is an adapter.**
+> **React is optional. `createLogic` is the product. Everything else is an adapter.**
 
 ---
 
@@ -274,7 +274,7 @@ async function run() {
 run()
 ```
 
-✔ Same runtime, same behavior, no React involved.
+✔ Same runtime, same behavior, no React involved.  
 ✔ No React  
 ✔ Replayable  
 
@@ -367,7 +367,7 @@ import { useLogicSelector } from "logic-runtime-react-z"
 
 function CountLabel() {
   const count = useLogicSelector(
-    counterLogic.create(),
+    counterLogic,
     state => state.count
   )
 
@@ -432,20 +432,45 @@ expect(runtime.computed.squared).toBe(16)
 
 ---
 
-## 🔍 Comparison: Redux vs Zustand
+## 🔍 Comparison
 
-| Capability / Library     | logic-runtime-react-z | Redux | Zustand |
-|--------------------------|:---------------------:|:-----:|:-------:|
-| Intent-first model       | ✅                    | ❌    | ❌       |
-| State-first model        | ❌                    | ✅    | ✅       |
-| First-class effects      | ✅                    | ❌    | ❌       |
-| Computed graph           | ✅                    | ❌    | ⚠️       |
-| Deterministic execution  | ✅                    | ❌    | ❌       |
-| Logic outside React      | ✅                    | ❌    | ❌       |
-| Backend-safe             | ✅                    | ❌    | ❌       |
+| Criteria                                  |  logic-runtime-react-z  |         Redux        |        Zustand        |             Recoil             |             MobX            |
+| ----------------------------------------- | :---------------------: | :------------------: | :-------------------: | :----------------------------: | :-------------------------: |
+| **Intent-first model**                    |            ✅            |           ❌          |           ❌           |               ⚠️               |              ⚠️             |
+| **State-first model**                     |            ❌            |           ✅          |           ✅           |                ✅               |              ✅              |
+| **First-class effect orchestration**      |       ✅ (built-in)      |  ⚠️ (via middleware) |  ⚠️ (via middleware)  | ⚠️ (selectors + async helpers) |   ⚠️ (actions + reactions)  |
+| **Fine-grained derived state (computed)** |  ✅ (reactive & cached)  |           ❌          | ⚠️ (simple selectors) |      ✅ (dependency graph)      | ⚠️ (observable derivations) |
+| **Predictable execution semantics**       |  🔁 intent queue/rules   | 👍 sync + middleware |        👍 sync        |             👍 sync            |           👍 sync           |
+| **Async control strategies built-in**     | ✅ takeLatest / debounce |           ❌          |           ❌           |                ❌               |              ❌              |
+| **Logic outside React**                   |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
+| **Framework-agnostic**                   |            ✅            |           ⚫          |           ⚫           |                ⚫               |              ⚫              |
+| **Backend-ready usage**                   |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
+| **Type-inferred actions**                 |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
+| **Minimal re-render strategies**          |    ✓ selectors/hooks     |      ✓ selectors     |      ✓ selectors      |        ✓ atoms/selectors       |     ✗ global observables    |
+| **Devtools ecosystem**                    |       ⚠️ (nascent)       |           ✅          |           ⚠️          |               ⚠️               |              ⚠️             |
 
 
-##### ⚠️ via selectors, not a true dependency graph
+
+<b>⚠️ via selectors, not a true dependency graph. </b>
+
+---
+
+## ❓ Why not Redux + RTK?
+
+Redux focuses on state transitions.
+
+logic-runtime-react-z models system behavior.
+
+In Redux:
+- async flow is external (thunk/saga)
+- effects are not first-class
+- execution model depends on middleware setup
+
+In logic-runtime-react-z:
+- async orchestration is built-in
+- intent is the only entry point
+- execution order is guaranteed
+
 
 ---
 
@@ -456,14 +481,48 @@ expect(runtime.computed.squared).toBe(16)
 
 ---
 
-## 🧬 Determinism Guarantee
+## 🧬 Deterministic Execution Model
 
 - Intents are processed sequentially
 - State mutations are isolated
-- Async flows are predictable
-- Same inputs → same outputs
+- Async effects follow declared strategies (takeLatest, debounce, etc.)
+- Execution order is predictable
+
+Given the same intent sequence, the resulting state is reproducible.
 
 ---
+
+## 📐 Architecture Diagram (High-level)
+
+```bash
+┌─────────────┐
+│   React UI  │
+└──────┬──────┘
+       │ adapter
+┌──────▼──────┐
+│   Runtime   │
+│  (create)   │
+├─────────────┤
+│  Intent Bus │
+│  Effects    │
+│  Handlers   │
+│  State      │
+│  Computed   │
+└─────────────┘
+```
+
+<b>Runtime is the product. React is an adapter.</b>
+
+---
+
+## ⚠️ When Not to Use
+
+- Simple local component state
+- Small apps without async complexity
+- Teams unfamiliar with event-driven models
+
+---
+
 
 ## License
 
