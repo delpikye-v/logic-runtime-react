@@ -90,6 +90,11 @@ const counterLogic = createLogic({
       })
     })
   },
+  actions: {
+    add({ emit }) {
+      return (n: number) => emit("add", n)
+    }
+  },
 })
 
 async function main() {
@@ -150,16 +155,18 @@ import { counterLogic } from "./counter.logic"
 type CounterInjected =
   LogicViewProps<typeof counterLogic>
 
-const CounterView = ({ state, computed, intent }: LogicViewProps) => {
+const CounterView = ({ state, actions, emit }: LogicViewProps) => {
+  // actions and emit => same emit
   return (
     <div>
       <h2>Count: {state.count}</h2>
-      <p>Double: {computed.double}</p>
-      <p>Triple: {computed.triple}</p>
+      <p>Double: {state.double}</p>
+      <p>Triple: {state.triple}</p>
 
-      <button onClick={() => intent("inc")}>+</button>
-      <button onClick={() => intent("dec")}>-</button>
-      <button onClick={() => intent("asyncInc")}>
+      <button onClick={() => emit("inc")}>+</button>
+      <button onClick={() => emit("dec")}>-</button>
+      <button onClick={() => actions.add(10)}>+10 (action)</button>
+      <button onClick={() => emit("asyncInc")}>
         {state.loading ? "Loading..." : "Async +"}
       </button>
     </div>
@@ -188,17 +195,17 @@ import { useLogic } from "logic-runtime-react-z"
 import { counterLogic } from "./counter.logic"
 
 export function Counter() {
-  const { state, computed, intent } = useLogic(counterLogic)
+  const { state, actions, emit } = useLogic(counterLogic)
 
   return (
     <div>
       <h2>Count: {state.count}</h2>
-      <p>Double: {computed.double}</p>
-      <p>Triple: {computed.triple}</p>
+      <p>Double: {state.double}</p>
+      <p>Triple: {state.triple}</p>
 
-      <button onClick={() => intent("inc")}>+</button>
-      <button onClick={() => intent("dec")}>-</button>
-      <button onClick={() => intent("asyncInc")}>
+      <button onClick={() => emit("inc")}>+</button>
+      <button onClick={() => emit("dec")}>-</button>
+      <button onClick={() => emit("asyncInc")}>
         {state.loading ? "Loading..." : "Async +"}
       </button>
     </div>
