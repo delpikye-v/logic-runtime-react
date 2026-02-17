@@ -1,6 +1,6 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "description": "Intent-first business logic runtime. Deterministic, headless, and framework-agnostic.",
   "license": "MIT",
   "author": "Delpi.Kye",

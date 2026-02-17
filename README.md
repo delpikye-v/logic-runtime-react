@@ -149,14 +149,17 @@ You have **2 integration styles**:
 Keeps view pure and declarative.
 
 ```tsx
+// full see: LIVE EXAMPLE
 import { withLogic, LogicViewProps } from "logic-runtime-react-z"
 import { counterLogic } from "./counter.logic"
 
+interface MyProps {}
+
 type CounterInjected =
-  LogicViewProps<typeof counterLogic>
+  LogicViewProps<typeof counterLogic> & MyProps
 
 const CounterView = ({ state, actions, emit }: LogicViewProps) => {
-  // actions and emit => same emit
+  // actions and emit => same emit (update state)
   return (
     <div>
       <h2>Count: {state.count}</h2>
@@ -278,7 +281,7 @@ async function run() {
   await runtime.emit("login")
   await runtime.emit("logout")
 
-  console.log(runtime.getSnapshot())
+  console.log(runtime.state)
 }
 
 run()
@@ -313,7 +316,7 @@ const logic = createLogic({
 const runtime = logic.create()
 
 await runtime.emit("set", 4)
-expect(runtime.computed.squared).toBe(16)
+expect(runtime.state.squared).toBe(16)
 ```
 
 ---

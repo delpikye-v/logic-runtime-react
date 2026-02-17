@@ -17,7 +17,7 @@ export declare function createLogic<S extends object, C extends ComputedDef<S>, 
 }) => (...args: any[]) => any>>(config: {
     name?: string;
     state: S;
-    computed: C;
+    computed?: C;
     intents?: (bus: {
         on: LogicRuntime<S, C, any>["onIntent"];
         effect: (type: string, eff: EffectDef) => void;
