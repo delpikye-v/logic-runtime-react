@@ -1,6 +1,6 @@
 {
   "name": "logic-runtime-react-z",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "Intent-first business logic runtime. Deterministic, headless, and framework-agnostic.",
   "license": "MIT",
   "author": "Delpi.Kye",
@@ -14,16 +14,6 @@
       "types": "./build/index.d.ts",
       "import": "./build/index.esm.js",
       "require": "./build/index.cjs.js"
-    },
-    "./react": {
-      "types": "./build/react/index.d.ts",
-      "import": "./build/react/index.esm.js",
-      "require": "./build/react/index.cjs.js"
-    },
-    "./devtools": {
-      "types": "./build/devtools/index.d.ts",
-      "import": "./build/devtools/index.esm.js",
-      "require": "./build/devtools/index.cjs.js"
     }
   },
   "files": [

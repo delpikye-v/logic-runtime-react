@@ -6,18 +6,23 @@ export type LogicFactory<S extends object, C extends ComputedDef<S>, A extends L
     name?: string;
     create(scope?: Scope): LogicRuntime<S, C, A>;
 };
-export declare function createLogic<S extends object, C extends ComputedDef<S> = {}, A extends LogicActions = {}>(config: {
+export type ExtractLogicTypes<T> = T extends LogicFactory<infer S, infer C, infer A> ? {
+    state: Readonly<S & InferComputed<C>>;
+    actions: A;
+    emit: (intent: string, payload?: any) => Promise<void>;
+} : never;
+export declare function createLogic<S extends object, C extends ComputedDef<S>, ActionsDef extends Record<string, (context: {
+    emit: LogicRuntime<S, C, any>["emit"];
+    getState: () => Readonly<S & InferComputed<C>>;
+}) => (...args: any[]) => any>>(config: {
     name?: string;
     state: S;
-    computed?: C;
+    computed: C;
     intents?: (bus: {
-        on: LogicRuntime<S, C, A>["onIntent"];
+        on: LogicRuntime<S, C, any>["onIntent"];
         effect: (type: string, eff: EffectDef) => void;
     }) => void;
-    actions?: {
-        [K in keyof A]: (context: {
-            emit: LogicRuntime<S, C, A>["emit"];
-            getState: () => Readonly<S & InferComputed<C>>;
-        }) => A[K];
-    };
-}): LogicFactory<S, C, A>;
+    actions: ActionsDef;
+}): LogicFactory<S, C, {
+    [K in keyof ActionsDef]: ReturnType<ActionsDef[K]>;
+}>;

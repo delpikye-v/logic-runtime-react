@@ -4,13 +4,12 @@
 
 <a href="https://codesandbox.io/p/sandbox/jnd992" target="_blank">LIVE EXAMPLE</a>
 
-**Intent-first business logic runtime**: React is a **view** — logic lives **elsewhere**.
+**Intent-First Business Logic Runtime.**. React is a view layer. Business logic lives elsewhere.  
 
-A headless, deterministic, intent-driven runtime for frontend & backend logic.
-React components stay pure. Business logic is fully testable, replayable, and framework-agnostic.
+A headless, deterministic, intent-driven runtime for frontend and backend systems.  
 
-> **Intent is the only entry point.**
-> **React is optional. `createLogic` is the product. Everything else is an adapter.**
+> **Intent is the only entry point. Logic is deterministic.**
+> **React is optional** — `createLogic` is the product; everything else is an adapter.
 
 ---
 
@@ -59,7 +58,7 @@ npm install logic-runtime-react-z
 import { createLogic } from "logic-runtime-react-z"
 
 const counterLogic = createLogic({
-  state: { count: 0 },
+  state: { count: 0, loading: false },
 
   intents: bus => {
     bus.on("inc", ({ setState }) => {
@@ -71,6 +70,23 @@ const counterLogic = createLogic({
     bus.on<number>("add", ({ payload, setState }) => {
       setState(s => {
         s.count += payload
+      })
+    })
+
+    bus.on("dec", ({ setState }) => {
+      setState(s => {
+        s.count--
+      })
+    })
+
+    bus.on("asyncInc", async ({ setState }) => {
+      setState(s => { s.loading = true })
+
+      await new Promise(r => setTimeout(r, 1000))
+
+      setState(s => {
+        s.count++
+        s.loading = false
       })
     })
   },
@@ -111,123 +127,110 @@ computed: {
 - Reading `state.count` automatically tracks dependencies.
 - Computed values are cached and only re-evaluated when tracked dependencies change.
 
----
-
-## ⚛️ React Integration (No Hooks Required)
-
-### Define Logic (Framework-Agnostic)
-
-```ts
-// counter.logic.ts
-import { createLogic, effect } from "logic-runtime-react-z"
-
-export const counterLogic = createLogic({
-  name: "counter",
-
-  state: {
-    count: 1,
-    loading: false,
-  },
-
-  computed: {
-    double: ({ state }) => state.count * 2,
-    triple: ({ state }) => state.count * 3,
-  },
-
-  intents: bus => {
-    bus.on("inc", ({ setState }) => {
-      setState(s => {
-        s.count++
-      })
-    })
-
-    bus.on<number>("add", ({ payload, setState }) => {
-      setState(s => {
-        s.count += payload
-      })
-    })
-
-    bus.on<number>("inc-async", async ({ payload, setState }) => {
-      setState(s => {
-        s.loading = true
-      })
-
-      await new Promise(r => setTimeout(r, 1000))
-
-      setState(s => {
-        s.count += payload
-        s.loading = false
-      })
-    })
-
-    // effects = side-effects only (no state mutation)
-    bus.effect(
-      "inc-async",
-      effect(async ({ payload }) => {
-        console.log("effect run:", payload)
-      }).takeLatest()
-    )
-  },
-
-  actions: {
-    inc({ emit }) {
-      return () => emit("inc")
-    },
-
-    add({ emit }) {
-      return (n: number) => emit("add", n)
-    },
-
-    incAsync({ emit }) {
-      return (n: number) => emit("inc-async", n)
-    },
-  },
-})
-
-```
 
 ---
 
-### Pure React View (Dumb View)
+## ⚛️ React Integration
+
+React is a thin adapter.
+
+You have **2 integration styles**:
+
+- `withLogic` → Recommended
+- `useLogic` → Direct hook usage
+
+#### 🧩 Option 1 — withLogic (Recommended)
+
+Keeps view pure and declarative.
 
 ```tsx
-import React from "react"
-import { withLogic } from "logic-runtime-react-z"
+import { withLogic, LogicViewProps } from "logic-runtime-react-z"
 import { counterLogic } from "./counter.logic"
 
-function CounterView(props) {
-  const { state, actions, emit } = props
+type CounterInjected =
+  LogicViewProps<typeof counterLogic>
 
+const CounterView = ({ state, computed, intent }: LogicViewProps) => {
   return (
-    <div style={{ padding: 12 }}>
-      <div>Triple Count: {state.triple}</div>
+    <div>
+      <h2>Count: {state.count}</h2>
+      <p>Double: {computed.double}</p>
+      <p>Triple: {computed.triple}</p>
 
-      <button onClick={actions.inc}>+1</button>
-      <button onClick={() => actions.add(10)}>+10</button>
-
-      <button
-        disabled={state.loading}
-        onClick={() => actions.incAsync(5)}
-      >
-        Async +5
-      </button>
-
-      <hr />
-
-      <button onClick={() => emit("inc")}>
-        emit("inc")
+      <button onClick={() => intent("inc")}>+</button>
+      <button onClick={() => intent("dec")}>-</button>
+      <button onClick={() => intent("asyncInc")}>
+        {state.loading ? "Loading..." : "Async +"}
       </button>
     </div>
   )
 }
 
+// export default withLogic(counterLogic)(CounterView)
 export const CounterPage = withLogic(counterLogic, CounterView)
-
 ```
 
-✔ Props are inferred when using withLogic, no manual generics required.
+<b> Why this is recommended?</b>
+
+- View is fully testable
+- No hooks inside view
+- Logic can be reused outside React
+- Clear separation of concerns
 
 ---
+
+#### 🪝 Option 2 — useLogic
+
+Use directly inside a component.
+
+```tsx
+import { useLogic } from "logic-runtime-react-z"
+import { counterLogic } from "./counter.logic"
+
+export function Counter() {
+  const { state, computed, intent } = useLogic(counterLogic)
+
+  return (
+    <div>
+      <h2>Count: {state.count}</h2>
+      <p>Double: {computed.double}</p>
+      <p>Triple: {computed.triple}</p>
+
+      <button onClick={() => intent("inc")}>+</button>
+      <button onClick={() => intent("dec")}>-</button>
+      <button onClick={() => intent("asyncInc")}>
+        {state.loading ? "Loading..." : "Async +"}
+      </button>
+    </div>
+  )
+}
+```
+
+✔ Props are inferred when using useLogic, no manual generics required.
+
+---
+
+## 🌊 Async Support
+
+Async logic is just another intent.
+
+```ts
+bus.on("fetchUser", async ({ setState }) => {
+  setState(s => { s.loading = true })
+
+  const data = await api.getUser()
+
+  setState(s => {
+    s.user = data
+    s.loading = false
+  })
+})
+```
+
+No special async API needed.
+
+---
+
 
 ## 🧪 Backend Usage (Same Runtime)
 
@@ -274,134 +277,12 @@ async function run() {
 run()
 ```
 
-✔ Same runtime, same behavior, no React involved.  
-✔ No React  
-✔ Replayable  
+✔ Same runtime, same behavior.  
+✔ No React dependency   
+✔ Replayable execution   
 
 ---
 
-## 🪝 Hooks Examples (Optional, Thin Adapters)
-
-Hooks are optional convenience layers on top of the same logic runtime.
-They do not own state, they only subscribe to it.
-
-#### useRuntime – full snapshot
-```ts
-import { useRuntime } from "logic-runtime-react-z"
-
-function Debug() {
-  const snapshot = useRuntime(counterLogic)
-  return <pre>{JSON.stringify(snapshot, null, 2)}</pre>
-}
-```
-
-✔ Subscribes to full snapshot
-✔ Includes state + computed
-✔ Read-only
-
-#### useActions – actions only (no re-render)
-```ts
-import { useActions } from "logic-runtime-react-z"
-
-function Buttons() {
-  const actions = useActions(counterLogic)
-
-  return (
-    <>
-      <button onClick={actions.inc}>+1</button>
-      <button onClick={() => actions.add(5)}>+5</button>
-    </>
-  )
-}
-```
-
-
-✔ No re-render on state change
-✔ Fully inferred action types
-✔ Ideal for buttons / handlers
-
-#### useComputed – Subscribe to computed values
-```ts
-import { useComputed } from "logic-runtime-react-z"
-
-function Stats() {
-  const { double, triple } = useComputed(counterLogic)
-
-  return (
-    <>
-      <div>Double: {double}</div>
-      <div>Triple: {triple}</div>
-    </>
-  )
-}
-
-function DoubleOnly() {
-  const double = useComputed(counterLogic, c => c.double)
-  return <div>{double}</div>
-}
-```
-
-✔ Only derived data
-✔ Cached & reactive
-✔ No state mutation possible
-
-#### useComputed with selector (recommended)
-```ts
-function DoubleOnly() {
-  const double = useComputed(
-    counterLogic,
-    c => c.double
-  )
-
-  return <div>Double: {double}</div>
-}
-```
-
-✔ Component re-renders only when double changes
-✔ No extra dependencies
-✔ Type-safe selector
-
-#### useLogicSelector – State selector (Redux-like)
-```ts
-import { useLogicSelector } from "logic-runtime-react-z"
-
-function CountLabel() {
-  const count = useLogicSelector(
-    counterLogic,
-    state => state.count
-  )
-
-  return <span>{count}</span>
-}
-```
-
-✔ Memoized selector
-✔ Fine-grained subscriptions
-✔ Familiar mental model
-
----
-
-## 🧱 Composing Multiple Logic Modules
-
-```ts
-import { composeLogic } from "logic-runtime-react-z"
-import { userLogic } from "./user.logic"
-import { cartLogic } from "./cart.logic"
-
-const app = composeLogic({
-  user: userLogic,
-  cart: cartLogic,
-})
-
-await app.emit("login")
-
-const state = app.getState()
-state.user
-state.cart
-
-```
-
----
 
 ## 🧪 Unit Test Example
 
@@ -422,55 +303,85 @@ const logic = createLogic({
   },
 })
 
-const runtime = counterLogic.create()
+const runtime = logic.create()
 
 await runtime.emit("set", 4)
 expect(runtime.computed.squared).toBe(16)
 ```
 
-✔ Computed values are tested like plain data
-
 ---
 
 ## 🔍 Comparison
 
-| Criteria                                  |  logic-runtime-react-z  |         Redux        |        Zustand        |             Recoil             |             MobX            |
-| ----------------------------------------- | :---------------------: | :------------------: | :-------------------: | :----------------------------: | :-------------------------: |
-| **Intent-first model**                    |            ✅            |           ❌          |           ❌           |               ⚠️               |              ⚠️             |
-| **State-first model**                     |            ❌            |           ✅          |           ✅           |                ✅               |              ✅              |
-| **First-class effect orchestration**      |       ✅ (built-in)      |  ⚠️ (via middleware) |  ⚠️ (via middleware)  | ⚠️ (selectors + async helpers) |   ⚠️ (actions + reactions)  |
-| **Fine-grained derived state (computed)** |  ✅ (reactive & cached)  |           ❌          | ⚠️ (simple selectors) |      ✅ (dependency graph)      | ⚠️ (observable derivations) |
-| **Predictable execution semantics**       |  🔁 intent queue/rules   | 👍 sync + middleware |        👍 sync        |             👍 sync            |           👍 sync           |
-| **Async control strategies built-in**     | ✅ takeLatest / debounce |           ❌          |           ❌           |                ❌               |              ❌              |
-| **Logic outside React**                   |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
-| **Framework-agnostic**                   |            ✅            |           ⚫          |           ⚫           |                ⚫               |              ⚫              |
-| **Backend-ready usage**                   |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
-| **Type-inferred actions**                 |            ✅            |          ⚠️          |           ⚠️          |               ⚠️               |              ⚠️             |
-| **Minimal re-render strategies**          |    ✓ selectors/hooks     |      ✓ selectors     |      ✓ selectors      |        ✓ atoms/selectors       |     ✗ global observables    |
-| **Devtools ecosystem**                    |       ⚠️ (nascent)       |           ✅          |           ⚠️          |               ⚠️               |              ⚠️             |
+This is not about “better” — it's about architectural intent.
+
+| Criteria                        | logic-runtime-react-z        | Redux Toolkit        | Zustand        | Recoil        | MobX           |
+|---------------------------------|------------------------------|----------------------|----------------|---------------|----------------|
+| **Primary abstraction**         | Intent runtime               | Reducer store        | Store          | Atom graph    | Observable     |
+| **Mental model**                | Intent → Behavior → State    | Action → Reducer     | Mutate store   | Atom graph    | Reactive graph |
+| **Single mutation entry**       | ✅                           | ✅                   | ❌             | ❌             | ❌             |
+| **Business logic isolation**    | ✅                           | ✅                   | ⚠️             | ⚠️             | ⚠️             |
+| **Built-in async orchestration**| ✅                           | ⚠️                   | ❌             | ❌             | ❌             |
+| **Deterministic execution**     | ✅                           | ✅                   | ⚠️             | ⚠️             | ⚠️             |
+| **Derived state built-in**      | ✅                           | ❌                   | ⚠️             | ✅             | ✅             |
+| **Headless runtime**            | ✅                           | ⚠️                   | ⚠️             | ❌             | ⚠️             |
+| **Backend / worker ready**      | ✅                           | ⚠️                   | ⚠️             | ❌             | ❌             |
+| **Side-effect centralization**  | ✅                           | ⚠️                   | ❌             | ❌             | ⚠️             |
+| **Devtools maturity**           | ⚠️                           | ✅                   | ⚠️             | ⚠️             | ⚠️             |
 
 
+<br />
 
-<b>⚠️ via selectors, not a true dependency graph. </b>
+✅ Built-in / first-class  
+⚠️ Possible / usage-dependent  
+❌ Not built-in
 
 ---
 
-## ❓ Why not Redux + RTK?
+### 🧠 Architectural Difference
 
-Redux focuses on state transitions.
+Most state libraries focus on:
 
-logic-runtime-react-z models system behavior.
+> **How state is stored and updated**
 
-In Redux:
-- async flow is external (thunk/saga)
-- effects are not first-class
-- execution model depends on middleware setup
+`logic-runtime-react-z` focuses on:
 
-In logic-runtime-react-z:
-- async orchestration is built-in
-- intent is the only entry point
-- execution order is guaranteed
+> **How behavior is orchestrated through intents**
 
+Redux/Zustand answer:
+> "Where is my state and how do I change it?"
+
+This runtime answers:
+> "What behavior is triggered by this event, and how should it execute?"
+
+---
+
+### 🧭 Positioning Summary
+
+- Redux → Structured state container
+- Zustand → Lightweight mutable store
+- Recoil → Declarative dependency graph
+- MobX → Reactive observable system
+- **logic-runtime-react-z → Intent-first behavior runtime**
+
+---
+
+### 🎯 When This Makes Sense
+
+Choose this if you need:
+
+- Complex async flows
+- Deterministic replayable behavior
+- Logic shared between frontend & backend
+- Strong separation between UI and domain behavior
+- An explicit event-driven boundary
+
+Choose simpler state tools if:
+
+- You mostly manage UI state
+- You don’t need orchestration
+- Your async flows are trivial
+- Your team prefers mutable patterns
 
 ---
 
@@ -485,7 +396,7 @@ In logic-runtime-react-z:
 
 - Intents are processed sequentially
 - State mutations are isolated
-- Async effects follow declared strategies (takeLatest, debounce, etc.)
+- Async effects can follow declared execution strategies.
 - Execution order is predictable
 
 Given the same intent sequence, the resulting state is reproducible.
